@@ -8,7 +8,6 @@
 5.  [Conclusion](#org6b2ff0e)
 
 
-
 <a id="org6876d62"></a>
 
 # Introduction
@@ -146,16 +145,6 @@ This should happen in 256 tries. Then we need to have a message size high enough
 ![img](./imgs/eternity.jpg)
 
 Well, after a while, we finally get the flag
-
-<div style="overflow:scroll; padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em"> <h3>Flag</h3> 
-# Table of Contents
-
-
-
-FCSC{1c165d89fadceef1e40d037098a531533150ab871d8d2bff3831c836001a6cce}
- </div>
-
-The source code used to retrieve the flag can be found in the appendix
 
 
 <a id="org6b2ff0e"></a>

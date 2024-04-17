@@ -36,30 +36,12 @@ The following part will not lead to any exploitable vulnerability, but understan
 
 First let&rsquo;s notice some important properties of the round function:
 
-Given an initial state   $$K_0 = \left(\begin{array}{c} k_0 \\ k_1 \\ \vdots \\ k_{15} \end{array}\right)$$, the output of the round function can be expressed as    $K_1 = M.K_0+ T$
-with $$T = \left(\begin{array}{c} A \\ A \\ A \\ A \end{array}\right)$$ where $$A = \left(\begin{array}{c} SBOX[k_{13}]+cst \\ SBOX[k_{14}] \\ SBOX[k_{15}] \\ SBOX[k_{12}]\end{array}\right)$$. We also have
-
-$$M = \left[\begin{array}{c c c c c c c c c c c c c c c c} 1 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 \\
-0 &1 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 \\
-0 &0 &1 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 \\
-0 &0 &0 &1 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 \\
-1 &0 &0 &0 &1 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 \\
-0 &1 &0 &0 &0 &1 &0 &0 &0 &0 &0 &0 &0 &0 &0 &0 \\
-0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &0 &0 &0 &0 &0 &0 \\
-0 &0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &0 &0 &0 &0 &0 \\
-1 &0 &0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &0 &0 &0 &0 \\
-0 &1 &0 &0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &0 &0 &0 \\
-0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &0 &0 \\
-0 &0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &0 \\
-1 &0 &0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &1 &0 &0 &0 \\
-0 &1 &0 &0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &1 &0 &0 \\
-0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &1 &0 \\
-0 &0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &1 &0 &0 &0 &1 \\
-\end{array}\right]$ is a matrix such that $M^4 = Id$$
+Given an initial state   $K_0 = \[ k_0, k_1,  \vdots,  k_{15} \]$, the output of the round function can be expressed as  $K_1 = M.K_0+ T$
+with $T = \[ A, A, A, A \]$ where $A = \[SBOX[k_{13}]+cst,  SBOX[k_{14}], SBOX[k_{15}], SBOX[k_{12}\]$ for a triangular matrice M. We can also observe that $M^4 = Id$
 
 This is interesting because if $T$ is such a vector,
 
-then $M.T = \left(\begin{array}{c} A \\ 0 \\ A \\ 0 \end{array}\right)$, $M^2.T = \left(\begin{array}{c} A \\ A \\ 0 \\ 0 \end{array}\right)$, and $M^3.T = \left(\begin{array}{c} A \\ 0 \\ 0 \\ 0 \end{array}\right)$.
+then $M.T = \[ A, 0, A, 0 \]$, $M^2.T = \[A,  A, 0,  0\]$, and $M^3.T = \[ A, 0 , 0,  0 \]$.
 
 Hence, $R^k(K)$ will have the form $M^{k\mod 4}.K+T_{k}$ with $T_k$ a sum of &ldquo;sparse&rdquo; vectors with many zeros. While this operation is not linear, there is a form of periodicity modulo 4 in the matrix. So we might be able to find some stable subset in which this non-linearity can be controlled.
 
@@ -74,7 +56,6 @@ After some research I eventually found this article [New Representations of the 
 
 Starting from the previous analysis. As $M^4=Id$ we can feel that there is some periodicity involved. Looking at affine invariants they found four supplementary affine invariants of dimension 4 for $R^4$, with R the round function.
 
-\vspace{0.5cm}
 
 $$E_0 = \{(a, b, c, d, 0, b, 0, d, a, 0, 0, d, 0, 0, 0, d)\text{ for }a, b, c, d \in GF(2^8)\}$$
 
@@ -84,7 +65,6 @@ $$E_2 = \{(a, b, c, d, 0, b, 0, d, 0, b, c, 0, 0, b, 0, 0)\text{ for} a, b, c, d
 
 $$E_3 = \{(a, b, c, d, a, 0, c, 0, a, b, 0, 0, a, 0, 0, 0)\text{ for } a, b, c, d \in GF(2^8)\}$$
 
-\vspace{0.5cm}
 
 Meaning that for any $u\in GF(2^8)^{16}$, $R^4(u\oplus E_i) = R^4(u)\oplus E_i$.
 
@@ -99,33 +79,23 @@ Let&rsquo;s note $\pi_i$ the projector on $E_i$ and for any $x\in E_i$, $x = x_0
 
 We can then extend by recurrence the result to multiple iterations: Let&rsquo;s show by recurrence on $k$ that for all $u$ and all $i$, $R^k(u+E_i) = R^k(u)+E_{i+k}$ :
 
-\vspace{0.2cm}
- \hline
-
 -   We already have our initialization with $k=1$
--   for $k>1$, we have  $$R^k(u+E_i) = R^{k-1}(R(u+E_i)) \overset{Rec_1}{= }  R^{k-1}(R(u)+E_{i+1}) \overset{Rec_{k-1}}{ = } R^{k-1}(R(u)) + E_{i+k+1} = R^{k}(u)+E_{i+k+1}$$
+-   for $k>1$, we have  $R^k(u+E_i) = R^{k-1}(R(u+E_i)) \overset{Rec_1}{= }  R^{k-1}(R(u)+E_{i+1}) \overset{Rec_{k-1}}{ = } R^{k-1}(R(u)) + E_{i+k+1} = R^{k}(u)+E_{i+k+1}$
     
-    \hline
-
-\vspace{0.1cm}
 
 While the sum here is no longer direct, we can verify that we have the following relation
 
-$$\pi_{i+k}\left[R^k(x)\right] =\pi_{i+k}\left[R^k(\pi_i[x])\right]$$
+$\pi_{i+k}\left[R^k(x)\right] =\pi_{i+k}\left[R^k(\pi_i[x])\right]$
 
-\vspace{0.1cm}
-
-\hline
-\vspace{0.2cm}
 
 Indeed, if we want to prove it for $i=0$, let&rsquo;s decompose x and progressively separate by using $x_i\in E_i$
 
-\begin{align*}
+$$\begin{align*}
   R^k(x) & = R^k(x_0+x_1+x_2+x_3)\\
          & = R^k(x_0+x_1+x_2)+E_{3+k} \\
          & = R^k(x_0+x_1)+E_{2+k}+E_{3+k} \\
         & =  R^k(x_0)+E_{k+1}+E_{k+2}+E_{k+3}
-\end{align*}
+\end{align*}$$
 
 Hence $\pi_k(R^k(x)) = \pi_k(R^k(x_0)) = \pi_k(R^k(\pi_0(x))$. The same can be verified for all $i$.
 
@@ -172,7 +142,7 @@ For each $k'\in E_i$, check if $\pi_{i+2}(E(k',\pi_i(M))=\pi_{i+2}(C)$ with our 
 
 # Implementation
 
-![img](./imgs/right.jpg)
+![img](./imgs/right.jpg | width=100)
 
 So, it&rsquo;s over, right? WELL, not exactly. While it&rsquo;s always reassuring to see a complexity in $O(2^{32})$ in a ctf (it `usually` means that your cryptanalysis can work in decent times), it&rsquo;s actually pretty high, and some efforts must be made in order to minimize the computing time. After a first implementation in python, I found that my code would take about 10-20 days to brute-force the key, while the ctf would end in 6 days. Sure, I could have used multiple threads, and turn that brute-force into half a day, but that would also mean not having a functional computer for half a day (plus where is the fun in that?)
 
