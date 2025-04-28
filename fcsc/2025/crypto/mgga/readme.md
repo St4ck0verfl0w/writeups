@@ -119,7 +119,7 @@ The total complexity of the attack is
 
 which falls under $2^{32}$, right?
 
-![img](../src/wu-fcsc-2025/bruteforce .png)
+![img](./bruteforce.png)
 
 
 ## Theory vs reality, the shame behind the beauty

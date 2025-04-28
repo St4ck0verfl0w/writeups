@@ -31,7 +31,7 @@ More formally, a quadratic polynomial $f$ can be separated in its monomials of d
 
 With theses notations, $Q$ has many representations, as long as the sum of two symmetric coefficient is the same. Usually, Q is represented as an upper triangular matrix:
 
-![img](../src/wu-fcsc-2025/quadratic.png)
+![img](./quadratic.png)
 
 which represents the fact that all combinations $x_ix_j$ are possible. For a $n\times n$ matrix, this requires $\frac{n.(n+1)}{2}$ coefficients, and a full quadratic polynomial requires $\frac{(n+1)(n+2)}{2}$ coefficients.
 
@@ -41,7 +41,7 @@ While this is supposed to be hard, the signer uses the knowledge of a secret map
 
 In this mapping, the quadratic part as an upper triangular matrix looks like this:
 
-![img](../src/wu-fcsc-2025/trapdoor.png)
+![img](./trapdoor.png)
 
 The square gap at the top left corner indicates that in $x^tQ_i.x$ (the monomials of degree 2), there is no quadratic coefficient $x_i.x_j$ where both $i,j<o$. This essential means, that, by fixing the last $v$ coordinates to any arbitrary value, the resulting system $\mathcal{P}$ is linear in the first $o$ variables. Having exactly $n$ equation gives a much easier system to solve. The resulting system drops to $o\left(\frac{(n+1)(n+2)}{2}-\frac{o(o+1)}{2}\right)$. coefficients
 
@@ -106,7 +106,7 @@ This means that for all 1600 signatures, we have found corresponding decompositi
 
 ## Retrieving the public key
 
-![img](../src/wu-fcsc-2025/meme_pubkey.jpg)
+![img](./meme_pubkey.jpg)
 
 Another implicit yet very important condition to solving the public system is, well, having the public system. Unfortunately, we don&rsquo;t have it.
 
@@ -163,7 +163,7 @@ This challenge was really interesting for many reason. First, it got me hooked i
 
 ## Why we might have required less signature
 
-![img](../src/wu-fcsc-2025/meme_oil.jpg)
+![img](./meme_oil.jpg)
 
 As explained the typo in the key generation means that the number of coefficients in the public system is $29,400$. This mean that, using the same strategy, we could have extended the signer&rsquo;s and forger&rsquo;s Oil spaces while reducing the signer&rsquo;s and forger&rsquo;s Vinegar spaces, and do the same attack with $v=24$ and $o=36$
 
