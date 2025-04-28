@@ -169,3 +169,220 @@ As explained the typo in the key generation means that the number of coefficient
 
 The final number of coefficients would match $29,400$, and only $1,300$ signatures would in fact be required. I believe there will still be some difficulties, since we wont get enough equations (If the Oil space have size 36, then there should be 36 equations, not 24). Plus, we would miss 12 bytes of the signature enforced by shake256. But i still find interesting that, theoretically speaking, less signatures are required for interpolation.
 
+## Source code
+
+Here is the source code in sage. I aggregated multiple sage cells together depending on what they were used to do
+
+
+### constants
+
+```python
+    import json
+    from Crypto.Hash import SHAKE256
+    tot = 60
+    v_size = 36 # could be 24
+    intend_o_size = 24
+    intend_v_size = 36
+    o_size = tot-v_size
+    F = GF(256)
+    def bytes_to_vec(b):
+        return vector(F, [F.from_integer(k) for k in b])
+    with open('./output.txt') as f:
+        data = json.load(f)
+```
+
+### Retrieve $S_v$
+
+```python
+    # find set of yi with full rank
+    full_rank_list = []
+    list_of_y=[]
+    for t,y in  list(data.items()):
+        y = bytes_to_vec(bytes.fromhex(y))
+        if len(list_of_y) == 0:
+            full_rank_list.append((t,y))
+            list_of_y.append(y)
+            continue
+        M = Matrix(F,list_of_y+ [y])
+        if M.rank() == len(list_of_y)+1:
+            full_rank_list.append((t,y))
+            list_of_y.append(y)
+        if len(list_of_y)==tot:
+            break
+    
+    # Find mapping Sv
+    M = Matrix(F,v_size*tot,v_size*tot)
+    B = vector(F,v_size*tot)
+    for k,(t,y) in enumerate(full_rank_list):
+        message = bytes.fromhex(t)
+        shake = SHAKE256.new()
+        shake.update(message)
+        _ = shake.read(intend_o_size) # shake must be correct
+    
+        # Vinegar values
+        v_values = list(bytes_to_vec(shake.read(intend_v_size)))[:v_size]
+        for i in range(v_size): # i is the ith element of x_v (known by shake)
+            # hence, writing at row v_size*k+i
+            for j in range(tot):
+                M[v_size*k+i,tot*i+j] = y[j]
+            B[v_size*k+i] = v_values[i]
+    
+    
+    
+    Sv_unstruct = M.inverse()*B  #coefficients of mapping in wrong order
+    Sv = Matrix(F,v_size,tot)
+    for i in range(v_size):
+        for j in range(tot):
+            Sv[i,j] = Sv_unstruct[tot*i+j]
+    c = 0
+    for t,y in  list(data.items()):
+        c += 1
+        message = bytes.fromhex(t)
+        shake = SHAKE256.new()
+        shake.update(message)
+        _ = shake.read(24) # shake must be correct
+        assert Sv*bytes_to_vec(bytes.fromhex(y)) == bytes_to_vec(shake.read(intend_v_size))[:v_size]
+    print(c)
+```
+
+### Compute forger&rsquo;s Oil and vinegar space
+
+```python
+    Ys = []
+    from tqdm import tqdm
+    for t,y in  tqdm(list(data.items())):
+        message = bytes.fromhex(t)
+        shake = SHAKE256.new()
+        shake.update(message)
+        hash_m = shake.read(intend_o_size) # shake must be correct
+        yv = Sv.solve_right(bytes_to_vec(shake.read(intend_v_size))[:v_size])
+        yo = bytes_to_vec(bytes.fromhex(y)) - yv
+        t_vec = bytes_to_vec(hash_m)
+        Ys.append((yo,yv,t_vec))
+    O_space = []
+    for yo,_,_ in Ys[:tot]:
+        O_space.append(yo)
+    O_for_y = Matrix(O_space).image() # use the yo to build O_for_y
+    print(O_for_y)
+    O_y_basis = O_for_y.basis()
+    
+    V_space = []
+    for _,yv,_ in Ys[:60]:
+        V_space.append(yv)
+    V_for_y = Matrix(V_space).image() # use the yv to build V_for_y
+    V_y_basis = V_for_y.basis()
+    print(V_for_y)
+
+```
+
+### Compute arbitrary zv and zo and solve the system
+
+```python
+    fv = Matrix(V_y_basis).pseudoinverse()
+    fo = Matrix(O_y_basis).pseudoinverse()
+    system = []
+    for yo,yv,t in Ys:
+        zo = fo.solve_right(yo)
+        zv = fv.solve_right(yv)
+        system.append((zo,zv,yo,yv,t))
+    # now lets build the system of equations
+    #let's interpolate one eq at a time, better for
+    unknown = o_size*v_size + v_size*(v_size+1)//2 + tot +1
+    print(unknown)
+    systems = []
+    for LINE in tqdm(range(intend_o_size)):
+        M = Matrix(GF(256),len(system),unknown)
+        B = vector(GF(256),len(system))
+        for i,(zo,zv,yo,yv,t) in enumerate(system):
+            assert (Sv*yo).is_zero()
+            assert yv in V_for_y
+            assert yo == fo*zo
+            assert yv == fv*zv
+            total_eqs = 0
+    
+            # quadratic portion (Qofv)(Zv)
+            for j in range(v_size):
+                for k in range(j,v_size):
+                    M[i,total_eqs] = zv[j]*zv[k]
+                    total_eqs+=1
+    
+            # linear part of (Qofv)(Zv)
+            for j in range(o_size):
+                M[i,total_eqs] = (zo)[j]
+                total_eqs+=1
+    
+            for j in range(v_size):
+                M[i,total_eqs] = (zv)[j]
+                total_eqs+=1
+            # biquadratic sectoin (fv o Q' o fo)(zv,zo)
+            for j in range(v_size):
+                for k in range(o_size):
+                    M[i,total_eqs] = zv[j]*zo[k]
+                    total_eqs += 1
+    
+            M[i,total_eqs] = 1 # constant term
+            total_eqs += 1
+            B[i] = t[LINE]
+        systems.append(M.solve_right(B))
+```
+
+### forge the message
+
+```python
+    message_to_forge = b"Un mauvais vinaigre fait une mauvaise vinaigrette!"
+    
+    shake = SHAKE256.new()
+    shake.update(message_to_forge)
+    # Target values
+    hash_values = bytes_to_vec(shake.read(intend_o_size))
+    # Vinegar values
+    v_values = bytes_to_vec(shake.read(intend_v_size))
+    yv = Sv.solve_right(v_values)
+    zv = fv.solve_right(yv)
+    P = PolynomialRing(F,[f"zo{i}" for i in range(o_size)])
+    zo = P.gens()
+    Eqs  = []
+    for line in tqdm(range(intend_o_size)):
+        sum_pols = 0
+        total_eqs = 0
+    
+        # quadratic portion (Qofv)(Zv)
+        for j in range(v_size):
+            for k in range(j,v_size):
+                sum_pols += systems[line][total_eqs] * zv[j]*zv[k]
+                total_eqs+=1
+    
+        # linear part of (Qofv)(Zv)
+        for j in range(o_size):
+            sum_pols += systems[line][total_eqs] * zo[j]
+            total_eqs+=1
+    
+        for j in range(v_size):
+            sum_pols += systems[line][total_eqs] * zv[j]
+            total_eqs+=1
+    
+        # biquadratic sectoin (fv o Q' o fo)(zv,zo)
+        for j in range(v_size):
+            for k in range(o_size):
+                sum_pols += systems[line][total_eqs] * zv[j] * zo[k]
+                total_eqs+=1
+    
+        sum_pols += systems[line][total_eqs] # constant term
+        total_eqs += 1
+    
+        sum_pols -=hash_values[line]
+        Eqs.append(sum_pols)
+    
+    I =Ideal(Eqs)
+    solve = I.variety()[0]
+    
+    
+    zo_y = vector(F,[solve[u] for u in zo])
+    yo = fo*zo_y
+    y = yo+yv
+    def vec_to_bytes(vec):
+        return bytes([k.to_integer() for k in vec])
+    flag_signature = vec_to_bytes(y)
+    flag = f"FCSC{{{flag_signature.hex()}}}"
+    print(flag)
+```
