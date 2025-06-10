@@ -1,0 +1,237 @@
+%----------------------------------------------------------------------------------------
+%    PACKAGES AND THEMES
+%----------------------------------------------------------------------------------------
+
+\documentclass[aspectratio=169,xcolor=dvipsnames]{beamer}
+\usetheme{SimplePlus}
+
+\usepackage{MnSymbol,bbding,pifont}
+\usepackage{hyperref}
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+\usepackage{tcolorbox}
+\usepackage{outlines}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{caption}
+\lstset{basicstyle=\ttfamily, keywordstyle=\bfseries}
+
+\renewcommand{\u}[1]{\textcolor{red}{#1}}
+\renewcommand{\k}[1]{\textcolor{blue}{#1}}
+\newcommand{\flag}{\tikz[baseline=-0.5ex, scale=0.15]{\draw[thick] (0,0) -- (0,3); \fill[red] (0,2.5) -- (2,2) -- (0,1.5) -- cycle;}}
+
+\usepackage{rotating}	%% introduce sideways env
+
+%% Public TikZ libraries
+\usetikzlibrary{positioning}
+\usetikzlibrary{shapes}
+\usepackage{algorithm2e}
+\renewcommand{\thealgocf}{} 
+
+
+%% Custom TikZ addons
+\lstset{ 
+  language=C,               % specify the language
+  basicstyle=\ttfamily,      % basic font style
+  keywordstyle=\color{blue}, % keyword color
+  commentstyle=\color{green}, % comment color
+  stringstyle=\color{red},   % string color
+  frame=single,             % frame around the code
+  breaklines=true,          % line breaking
+  captionpos=b              % caption position at the bottom
+}
+
+%----------------------------------------------------------------------------------------
+%    TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title{Challenges FCSC 2025}
+\subtitle{Cryptographie et Side Channel}
+
+\author{St4ck0verfl0w}
+
+\institute
+{
+	Redacted
+}
+\date{\today} % Date, can be changed to a custom date
+
+%----------------------------------------------------------------------------------------
+%    PRESENTATION SLIDES
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+%------------------------------------------------
+%------------------------------------------------
+
+\begin{frame}
+    % Print the title page as the first slide
+    \titlepage
+\end{frame}
+
+%------------------------------------------------
+%------------------------------------------------
+
+\begin{frame}{France Cyber Security Challenge (FCSC)}
+    \begin{columns}[c]
+        \column{.45\textwidth}
+            \begin{center}                  
+                \includegraphics[width=0.8\textwidth]{img/meme/intro.png}
+            \end{center}
+
+        \column{.65\textwidth} % 
+           \begin{itemize}
+               \item  CTF organisé par l'\textbf{ANSSI} (individuel)
+               \item Recrute l'équipe de France pour les championnats Européens
+               \pause
+               \item \textbf{10 jours d'épreuves} (18 au 27 mai), 99 challenges
+                \item 10 catégories dont 6 classantes (\textbf{crypto, reverse, pwn, hardware, web, speerdun}, SCA, forensic, misc, intro)
+                \pause
+                \item 2046 inscrits (1848 ayant fait au moins une épreuve)
+                \item \url{https://fcsc.fr} puis \url{https://hackropole.fr}
+                \pause
+                \item \textcolor{red}{Particularité cette année : le speedrun}
+           \end{itemize}
+
+    \end{columns}
+        \pause
+    \begin{tikzpicture}[overlay, remember picture]
+        \node[rotate=23, scale=5, text=red] at (current page.center) {SPOILER ALERT};
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{CTFd}
+    \centering
+    \only<1>{
+        \includegraphics[width=0.6\textwidth]{img/fcsc-board.png}
+    }   
+    \only<2>{
+        \includegraphics[width=0.7\textwidth]{img/exemple-chal.png}
+    }   
+    \only<3>{
+    \begin{columns}[c]
+        \column{.5\textwidth}
+            \begin{center}                  
+                \includegraphics[width=1\textwidth]{img/classement.png}
+            \end{center}
+
+        \column{.5\textwidth} % 
+            \begin{center}                  
+                \includegraphics[width=1\textwidth]{img/top-catégorie.png}
+            \end{center}
+    \end{columns}
+    }   
+\end{frame}
+%------------------------------------------------
+%------------------------------------------------
+
+\begin{frame}{Sommaire}
+    % Throughout your presentation, if you choose to use \section{} and \subsection{} commands, these will automatically be printed on this slide as an overview of your presentation
+    \tableofcontents
+\end{frame}
+
+%------------------------------------------------
+%------------------------------------------------
+
+\begin{frame}{Les vrais héros}
+\centering
+\includegraphics[width=0.5\textwidth]{img/meme/thanks.png}
+\end{frame}
+
+
+\section{Side-channel}
+\subsection{Differential Power Analysis}
+\include{src/sca/spa}
+\subsection{Attaques par fautes sur RSA et courbes elliptiques}
+\include{src/sca/attaques_fautes}
+\subsection{Fuites de l'état interne AES}
+\include{src/sca/distrace}
+
+
+\section{Cryptographie}
+\subsection{Introduction : les classiques de ctf}
+\include{src/crypto/intro}
+\subsection{Sur les fonctions de hashage md5 et sha1}
+\include{src/crypto/md5}
+\subsection{Kyber et les anneaux quotients}
+\include{src/crypto/kyber}
+\subsection{Analyse différentielle et boomerang}
+\include{src/crypto/jafar}
+\subsection{Le schéma multivarié UOV}
+\include{src/crypto/UOV}
+\subsection{GEA1 et construction de backdoor}
+\include{src/crypto/gea}
+
+% \section{Side-channel}
+% \subsection{Differential Power Analysis}
+% \subsection{Attaques par fautes sur RSA et courbes elliptiques}
+% \subsection{Fuites de l'état interne AES}
+% 
+% 
+% \section{Cryptographie}
+% \subsection{Introduction : les classiques de ctf}
+% \subsection{Sur les fonctions de hashage md5 et sha1}
+% \subsection{Kyber et les anneaux quotients}
+% \subsection{Analyse différentielle et boomerang}
+% \subsection{Le schéma multivarié UOV}
+% \subsection{GEA1 et construction de backdoor}
+% 
+% \include{src/sca/spa}
+% \include{src/crypto/intro}
+% \include{src/crypto/md5}
+% \include{src/crypto/kyber}
+% \include{src/crypto/jafar}
+% \include{src/crypto/UOV}
+% \include{src/crypto/gea}
+% \include{src/sca/attaques_fautes}
+% \include{src/sca/distrace}
+
+%------------------------------------------------
+%------------------------------------------------
+
+\begin{frame}
+    \Huge{\centerline{\textbf{Merci}}}
+    \large{\centerline{\textbf{RDV en 2026 :) ?}}}
+\end{frame}
+
+
+%------------------------------------------------
+%------------------------------------------------
+
+\begin{frame}{Références}
+    \footnotesize
+    \bibliography{reference.bib}
+    \bibliographystyle{apalike}
+\end{frame}
+
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+%------------------------------------------------
+
+
+
+
+%------------------------------------------------
+
+
+
+
+\end{document}

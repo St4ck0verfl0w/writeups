@@ -1,0 +1,141 @@
+\begin{frame}{Attaques par faute sur RSA et ECDSA}
+    \large{\centerline{\textbf{Bellcore et LLL}}}
+\end{frame}
+
+\begin{frame}{No Divide just Conquer \FiveStar/\FiveStar\FiveStar/\FiveStar\FiveStar\FiveStar \hfill 60/\textcolor{red}{21/6 résolutions}}
+    \begin{columns}[c]
+        \column{.50\textwidth}
+        \begin{center}                  
+            \includegraphics[width=0.9\textwidth]{img/meme/rsa-intro.png}
+        \end{center}
+
+        \column{.50\textwidth} % 
+           \begin{outline}
+               \1 Objectif
+                \2 Implémenter RSA en assembleur-like
+                \2 Avec de plus en plus de restrictions
+           \end{outline}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Atomic Secable \FiveStar\FiveStar\FiveStar \hfill \textcolor{red}{4 résolutions}}
+\begin{columns}[c]
+        \column{.50\textwidth}
+        \begin{center}                  
+            \includegraphics[width=0.65\textwidth]{img/meme/atomic-secable-intro.png}
+        \end{center}
+
+        \column{.50\textwidth} %
+           \begin{outline}
+                \1 Objectif
+                    \2 Récupérer la clef secrète ECDSA
+                \pause
+                \1 Données
+                    \2 65 536 signatures fautées avec la clef
+                \pause
+                \1 Capacités d'attaquant
+                    \2 Fauter aléatoirement une liste d'instruction donnée
+           \end{outline}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Attaque à information partielle sur ECDSA \footnote{\cite{demicheli:hal-03045663}}}
+
+\[\left\{
+\begin{array}{c c c}
+\k{s_1} & = &\u{k_1}^{-1}\left(\k{h_1}+\k{r_1}*\u{d}\right) \mod \k{n} \\
+\k{s_2} & = &\u{k_2}^{-1}\left(\k{h_2}+\k{r_2}*\u{d}\right) \mod \k{n} \\
+&\vdots& \\
+\k{s_m} & = &\u{k_m}^{-1}\left(\k{h_m}+\k{r_m}*\u{d}\right) \mod \k{n} \\
+\end{array}
+\right.
+\pause
+\;\Rightarrow\;
+\left\{
+\begin{array}{c c c}
+\u{k_1}+\k{t_1}\u{k_m} + \k{u_1} & = & 0 \mod \k{n} \\
+\u{k_2}+\k{t_2}\u{k_m} + \k{u_2} & = & 0 \mod \k{n} \\
+&\vdots&\\
+\u{k_{m-1}}+\k{t_{m-1}}\u{k_m} + \k{u_{m-1}} & = & 0 \mod \k{n} \\
+\end{array}
+\right.\]
+
+\pause
+\begin{center}
+    On espère que les $\u{k_i}$ soient suffisamment petits (connaître les bits de poids fort)
+    \pause
+    
+    Le réseau suivant contient le vecteur $(\u{k_1},\;\dots,\;\u{k_m},\;\k{K})$
+\end{center}
+    \begin{columns}[c]
+        \column{.35\textwidth}
+        \[\left(
+        \begin{array}{c c c c c c}
+        \k{n} &   &        &   &   &    \\
+          & \k{n} &        &   &   &   \\
+          &   & \ddots &   &   &    \\
+          &   &        & \k{n} &   &   \\
+        \k{t_1}  &   \k{t_2} &  \dots    &  \k{t_{m-1}}  & 1 &   \\
+        \k{u_1}  &   \k{u_2} &  \dots    &  \k{u_{m-1}}  & 0 & K  \\
+        \end{array}
+        \right)\]
+        \pause
+        \column{.65\textwidth} % 
+           \begin{outline}
+           \1 Tricks sur l'algorithme LLL
+            \pause
+            \2 La diagonale de $\k{n}$ permet de simuler un réseau modulaire
+            \pause
+            \2 K est choisi grand pour forcer la dernière ligne à 1
+           \end{outline}
+    \end{columns}
+
+
+\end{frame}
+
+
+\begin{frame}{Dans le cadre du challenge}
+    \begin{columns}[c]
+\column{.55\textwidth}
+        \begin{outline}
+            \1Retrouver la clef privée: si un des $\u{k_i}$ \textbf{ou certains bits de plusieurs $\u{k_i}$} sont connus, c'est gagné
+            
+            \uncover<2->{
+            \1 Objectif : distinguer les deux cas
+            }
+                \uncover<3->{ 
+                \2 Par SCA (opérations différentes)
+                }
+                \uncover<4->{
+                \2 Par timing (premières opérations ignorées)
+                    \3 Temps d’exécution non constant
+                }
+                \uncover<5->{
+                \2 Un seul des deux cas resiste à une faute
+                    \3 On faute les 16 premières opérations
+                    \3 Les survivants commencent par 16 zéros
+                }
+        \end{outline}
+\column{.45\textwidth} % 
+    \uncover<2->{
+      \begin{algorithm}[H]
+        \SetAlgoLined
+        \KwIn{Scalaire $k = (k_{n-1}, \dots, k_0)_2$, Point $P$}
+        \KwOut{$Q = [k]P$}
+        $(R_0,R_1) \leftarrow (\mathcal{O},P)$\;
+        \For{$i \leftarrow n-1$ \KwTo $0$}{
+            \If{$k_i = 0$}{
+                $(R_0, R_1) \leftarrow ([2]R_0,R_0 + R_1)$\;
+            }
+            \Else{
+                $(R_0,R_1) \leftarrow (R_0 + R_1,[2]R_1)$\;
+            }
+        }
+        \Return $R_0$\;
+        \caption{Echelle de Montgomery}
+    \end{algorithm}
+    }
+    \end{columns}
+
+\end{frame}
+
